@@ -1,0 +1,141 @@
+type: custom:vertical-stack-in-card
+cards:
+  - type: horizontal-stack
+    cards:
+      - type: custom:button-card
+        entity: climate.nome_termnostato
+        name: "[[[ return entity.attributes.friendly_name ]]]"
+        show_state: false
+        show_name: true
+        show_icon: false
+        styles:
+          card:
+            - width: 200px
+            - height: 200px
+            - border-radius: 20px
+            - padding: 0
+            - display: flex
+            - justify-content: center
+            - align-items: center
+            - background: transparent
+            - position: relative
+          name:
+            - position: absolute
+            - bottom: 0px
+            - left: 50%
+            - transform: translateX(-50%)
+            - font-size: 14px
+            - color: black
+          custom_fields:
+            ring:
+              - position: absolute
+              - top: 54%
+              - left: 50%
+              - transform: translate(-50%, -50%)
+              - width: 160px
+              - height: 160px
+              - border-radius: 50%
+              - border: 8px solid rgba(0,0,0,0.1)
+              - box-sizing: border-box
+              - animation: ring-spin 2s linear infinite
+              - border-top-color: |
+                  [[[
+                    const t = entity.attributes.current_temperature || 0;
+                    const target = entity.attributes.temperature || 0;
+                    let diff = target - t;
+                    let p = diff / 2;
+                    if (p < 0) p = 0;
+                    if (p > 1) p = 1;
+                    const r = Math.round(255 * p);
+                    const g = Math.round(255 * (1 - p));
+                    const b = Math.round(100 * (1 - p));
+                    return `rgb(${r},${g},${b})`;
+                  ]]]
+            main_circle:
+              - width: 150px
+              - height: 150px
+              - border-radius: 50%
+              - position: absolute
+              - top: 50%
+              - left: 50%
+              - transform: translate(-50%, -45%)
+              - box-shadow: 0 0 10px rgba(0,0,0,0.4)
+              - background: |
+                  [[[
+                    const t = entity.attributes.current_temperature || 0;
+                    const target = entity.attributes.temperature || 0;
+                    let diff = target - t;
+                    let p = diff / 2;
+                    if (p < 0) p = 0;
+                    if (p > 1) p = 1;
+                    const r = Math.round(255 * p);
+                    const g = Math.round(255 * (1 - p));
+                    const b = Math.round(100 * (1 - p));
+                    return `rgb(${r},${g},${b})`;
+                  ]]]
+            temp:
+              - position: absolute
+              - top: 55%
+              - left: 57%
+              - transform: translate(-50%, -50%)
+              - font-size: 50px
+              - font-weight: bold
+              - color: black
+            target_circle:
+              - position: absolute
+              - top: 15px
+              - left: 50%
+              - transform: translateX(-50%)
+              - width: 70px
+              - height: 70px
+              - border-radius: 50%
+              - background: black
+              - font-size: 24px
+              - font-weight: bold
+              - color: white
+              - display: flex
+              - justify-content: center
+              - align-items: center
+              - box-shadow: 0 0 10px rgba(0,0,0,0.4)
+        custom_fields:
+          ring: ""
+          main_circle: ""
+          temp: |
+            [[[
+              return entity.attributes.current_temperature
+                ? entity.attributes.current_temperature.toFixed(1) + "°"
+                : "-";
+            ]]]
+          target_circle: |
+            [[[
+              return entity.attributes.temperature
+                ? entity.attributes.temperature.toFixed(1) + "°"
+                : "-";
+            ]]]
+        extra_styles: |
+          @keyframes ring-spin {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+          }
+      - type: custom:apexcharts-card
+        graph_span: 6h
+        header:
+          show: true
+          title: Andamento (6 ore)
+        apex_config:
+          chart:
+            height: 150
+            width: 200
+        series:
+          - entity: climate.nome_termnostato
+            attribute: current_temperature
+            name: Temperatura
+            type: line
+            stroke_width: 2
+            color: "#006666"
+          - entity: climate.nome_termnostato
+            attribute: temperature
+            name: Target
+            type: line
+            stroke_width: 2
+            color: "#FF8800"
