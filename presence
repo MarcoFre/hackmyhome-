@@ -1,0 +1,185 @@
+type: custom:button-card
+show_icon: false
+show_name: false
+show_state: false
+variables:
+  wifi_sensor: sensor.xxxx_wifi_connection
+  battery_sensor: sensor.xxxx_battery_level
+  charge_sensor: sensor.xxxx_battery_state
+  room_sensor: sensor.xxxx_room
+  person_entity: person.xxxx
+  person_name: |
+    [[[ return states[variables.person_entity].attributes.friendly_name; ]]]
+  person_icon: mdi:face-man
+  bg_color: "#1e2738"
+  text_color: "#ffffff"
+styles:
+  card:
+    - border-radius: 16px
+    - padding: 12px
+    - background: "[[[ return variables.bg_color; ]]]"
+    - height: 150px
+    - position: relative
+  custom_fields:
+    left:
+      - position: absolute
+      - left: 12px
+      - top: 20%
+      - transform: translateY(-50%)
+    center_name:
+      - position: absolute
+      - left: 50%
+      - top: 8%
+      - transform: translateX(-50%)
+      - color: "[[[ return variables.text_color; ]]]"
+      - font-size: 22px
+      - font-weight: 600
+    circle:
+      - position: absolute
+      - left: 50%
+      - top: 55%
+      - transform: translate(-50%, -50%)
+      - width: 64px
+      - height: 64px
+      - border-radius: 50%
+      - border-width: 4px
+      - border-style: solid
+      - border-color: |
+          [[[
+            return states[variables.person_entity].state === "home"
+              ? "#2ecc71"   // verde
+              : "#e74c3c";  // rosso
+          ]]]
+      - animation: |
+          [[[
+            return states[variables.person_entity].state === "home"
+              ? "pulseGreen 1.8s infinite"
+              : "pulseRed 1.8s infinite";
+          ]]]
+    center_icon:
+      - position: absolute
+      - left: 50%
+      - top: 55%
+      - transform: translate(-50%, -50%)
+    bottom_center:
+      - position: absolute
+      - left: 50%
+      - top: 85%
+      - transform: translateX(-50%)
+      - color: "#cdd5e0"
+      - font-size: 14px
+    right:
+      - position: absolute
+      - right: 12px
+      - top: 20%
+      - transform: translateY(-50%)
+extra_styles: |
+  @keyframes pulseGreen {
+    0%   { box-shadow: 0 0 0 0 rgba(46,204,113,0.7); }
+    70%  { box-shadow: 0 0 0 10px rgba(46,204,113,0); }
+    100% { box-shadow: 0 0 0 0 rgba(46,204,113,0); }
+  }
+  @keyframes pulseRed {
+    0%   { box-shadow: 0 0 0 0 rgba(231,76,60,0.7); }
+    70%  { box-shadow: 0 0 0 10px rgba(231,76,60,0); }
+    100% { box-shadow: 0 0 0 0 rgba(231,76,60,0); }
+  }
+custom_fields:
+  left: |
+    [[[
+      const wifi = states[variables.wifi_sensor]?.state;
+
+      if (wifi && wifi !== "unknown" && wifi !== "unavailable" && wifi !== "") {
+        return `
+          <div style="color:${variables.text_color}; font-size:14px; display:flex; align-items:center; gap:4px;">
+            <ha-icon icon="mdi:wifi" style="color:${variables.text_color}; width:20px; height:20px;"></ha-icon>
+            ${wifi}
+          </div>
+        `;
+      } else {
+        return `
+          <div style="color:#ff6b6b; font-size:14px; display:flex; align-items:center; gap:4px;">
+            <ha-icon icon="mdi:wifi-off" style="color:#ff6b6b; width:20px; height:20px;"></ha-icon>
+          </div>
+        `;
+      }
+    ]]]
+  center_name: |
+    [[[
+      return variables.person_name;
+    ]]]
+  circle: |
+    [[[
+      return "";
+    ]]]
+  center_icon: |
+    [[[
+      return `
+        <ha-icon icon="${variables.person_icon}" style="color:${variables.text_color}; width:42px; height:42px;"></ha-icon>
+      `;
+    ]]]
+  bottom_center: |
+    [[[
+      const raw = states[variables.person_entity]?.state || "unknown";
+      const room = states[variables.room_sensor]?.state || "—";
+
+      // Funzione sicura
+      function friendlyLocation(s) {
+        if (!s) return "—";
+        if (s === "home") return "Casa";
+        if (s === "not_home") return "Fuori Casa";
+
+        // rimuovi zone.
+        if (s.startsWith("zone.")) s = s.replace("zone.", "");
+
+        // capitalizza
+        return s.charAt(0).toUpperCase() + s.slice(1);
+      }
+
+      function locationIcon(s) {
+        if (s === "home") return "mdi:home";
+        if (s === "not_home") return "mdi:home-export-outline";
+        return "mdi:map-marker";
+      }
+
+      // Se è in casa → stanza
+      if (raw === "home") {
+        return `
+          <div style="display:flex; align-items:center; gap:6px;">
+            <ha-icon icon="mdi:home" style="width:18px; height:18px;"></ha-icon>
+            ${room}
+          </div>
+        `;
+      }
+
+      // Altrimenti → luogo
+      return `
+        <div style="display:flex; align-items:center; gap:6px;">
+          <ha-icon icon="${locationIcon(raw)}" style="width:18px; height:18px;"></ha-icon>
+          ${friendlyLocation(raw)}
+        </div>
+      `;
+    ]]]
+  right: |
+    [[[
+      const battery = Number(states[variables.battery_sensor]?.state) || 0;
+      const charging = states[variables.charge_sensor]?.state === "charging";
+
+      let icon = "mdi:battery";
+
+      if (battery >= 95) icon = "mdi:battery";
+      else if (battery >= 80) icon = "mdi:battery-90";
+      else if (battery >= 60) icon = "mdi:battery-60";
+      else if (battery >= 40) icon = "mdi:battery-40";
+      else if (battery >= 20) icon = "mdi:battery-20";
+      else icon = "mdi:battery-alert";
+
+      const chargeIcon = charging ? "⚡" : "";
+
+      return `
+        <div style="display:flex; align-items:center; gap:4px; color:${variables.text_color}; font-size:16px;">
+          <ha-icon icon="${icon}" style="color:lightgreen; width:22px; height:22px;"></ha-icon>
+          ${battery}% ${chargeIcon}
+        </div>
+      `;
+    ]]]
