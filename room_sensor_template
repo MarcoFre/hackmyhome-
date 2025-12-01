@@ -1,0 +1,13 @@
+{% set items = [
+{'room': 'Cameretta','alive': is_state('binary_sensor.beacon_scanner_bedroom_aura_beacon_status','on'),'dist':states('sensor.beacon_scanner_bedroom_aura_beacon_distance') | float(999)},
+{ 'room': 'Cucina','alive': is_state('binary_sensor.beacon_scanner_02_aura_beacon_status','on'),'dist':states('sensor.beacon_scanner_02_aura_beacon_distance') | float(999)},
+{ 'room': 'Soggiorno','alive': is_state('binary_sensor.tvambient_aura_beacon_status','on'),'dist': states('sensor.beacon_tvambient_aura_beacon_distance') | float(999)},
+{ 'room': 'Camera','alive': is_state('binary_sensor.beacon_scanner_03_aura_beacon_status','on'),'dist':states('sensor.beacon_scanner_03_aura_beacon_distance') | float(999)}
+] %}
+{% set alive = items | selectattr('alive', 'equalto', true) | list %}
+{% if alive | length == 0 %}
+  Offline
+{% else %}
+  {% set sorted = alive | sort(attribute='dist') %}
+  {{ sorted[0].room }}
+{% endif %}
