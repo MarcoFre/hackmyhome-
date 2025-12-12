@@ -1,0 +1,190 @@
+type: custom:button-card
+show_icon: false
+show_name: false
+show_state: false
+variables:
+  room_name: Soggiorno
+  room_icon: mdi:sofa
+  radar_sensor: binary_sensor.beacon_scanner_soggiorno_radar_presenza
+  person01_room: sensor.person01_room
+  person02_room: sensor.person02_room
+  person01_image: /local/man.png
+  person02_image: /local/woman.png
+  bg_color: "#1e2738"
+  text_color: "#ffffff"
+styles:
+  card:
+    - border-radius: 16px
+    - padding: 12px
+    - background: "[[[ return variables.bg_color; ]]]"
+    - height: 150px
+    - position: relative
+  custom_fields:
+    left_icon:
+      - position: absolute
+      - left: 12px
+      - top: 20%
+      - transform: translateY(-50%)
+      - color: "[[[ return variables.text_color; ]]]"
+    center_name:
+      - position: absolute
+      - left: 50%
+      - top: 8%
+      - transform: translateX(-50%)
+      - color: "[[[ return variables.text_color; ]]]"
+      - font-size: 22px
+      - font-weight: 600
+    center_button:
+      - position: absolute
+      - left: 50%
+      - top: 55%
+      - transform: translate(-50%, -50%)
+      - width: 64px
+      - height: 64px
+      - border-radius: 50%
+      - display: flex
+      - align-items: center
+      - justify-content: center
+      - animation: |
+          [[[
+            const r = states[variables.radar_sensor];
+            const radarValid = r && r.state !== "unavailable" && r.state !== "unknown";
+
+            const marco = states[variables.person01_room]?.state === variables.room_name;
+            const enza  = states[variables.person02_room]?.state === variables.room_name;
+
+            const occupied = radarValid
+              ? r.state === "on"
+              : (Orion || Aura);
+
+            return occupied
+              ? "pulseRed 1.8s infinite"
+              : "pulseGreen 1.8s infinite";
+          ]]]
+    right_people:
+      - position: absolute
+      - right: 12px
+      - top: 50%
+      - transform: translateY(-50%)
+      - display: flex
+      - gap: 8px
+    bottom_text:
+      - position: absolute
+      - left: 50%
+      - top: 82%
+      - transform: translateX(-50%)
+      - color: "#cdd5e0"
+      - font-size: 16px
+      - text-align: center
+      - font-weight: 500
+extra_styles: |
+  @keyframes pulseGreen {
+    0% { box-shadow: 0 0 0 0 rgba(46,204,113,0.7); }
+    70% { box-shadow: 0 0 0 14px rgba(46,204,113,0); }
+    100% { box-shadow: 0 0 0 0 rgba(46,204,113,0); }
+  }
+
+  @keyframes pulseRed {
+    0% { box-shadow: 0 0 0 0 rgba(231,76,60,0.7); }
+    70% { box-shadow: 0 0 0 14px rgba(231,76,60,0); }
+    100% { box-shadow: 0 0 0 0 rgba(231,76,60,0); }
+  }
+custom_fields:
+  left_icon: |
+    [[[
+      return `
+        <ha-icon
+          icon="${variables.room_icon}"
+          style="width:24px; height:24px;">
+        </ha-icon>
+      `;
+    ]]]
+  center_name: |
+    [[[
+      return variables.room_name;
+    ]]]
+  center_button: |
+    [[[
+      const r = states[variables.radar_sensor];
+      const radarValid = r && r.state !== "unavailable" && r.state !== "unknown";
+
+      const marco = states[variables.person01_room]?.state === variables.room_name;
+      const enza  = states[variables.person02_room]?.state === variables.room_name;
+
+      const occupied = radarValid
+        ? r.state === "on"
+        : (Orion || Aura);
+
+      const color = occupied ? "#e74c3c" : "#2ecc71";
+      const icon  = occupied ? "mdi:account-group" : "mdi:check";
+
+      return `
+        <div style="
+          width:100%;
+          height:100%;
+          border-radius:50%;
+          background:${color};
+          display:flex;
+          align-items:center;
+          justify-content:center;
+        ">
+          <ha-icon
+            icon="${icon}"
+            style="color:white; width:30px; height:30px;">
+          </ha-icon>
+        </div>
+      `;
+    ]]]
+  right_people: |
+    [[[
+      const r = states[variables.radar_sensor];
+      const radarValid = r && r.state !== "unavailable" && r.state !== "unknown";
+
+      const marco = states[variables.person01_room]?.state === variables.room_name;
+      const enza  = states[variables.person02_room]?.state === variables.room_name;
+
+      const occupied = radarValid
+        ? r.state === "on"
+        : (Orion || Aura);
+
+      if (!occupied) return "";
+
+      function person(img) {
+        return `
+          <div style="
+            width:38px;
+            height:38px;
+            border-radius:50%;
+            overflow:hidden;
+            border:2px solid #2ecc71;
+          ">
+            <img src="${img}"
+                 style="width:100%; height:100%; object-fit:cover;">
+          </div>
+        `;
+      }
+
+      return `
+        ${marco ? person(variables.person01_image) : ""}
+        ${enza  ? person(variables.person02_image)  : ""}
+      `;
+    ]]]
+  bottom_text: |
+    [[[
+      const r = states[variables.radar_sensor];
+      const radarValid = r && r.state !== "unavailable" && r.state !== "unknown";
+
+      const marco = states[variables.person01_room]?.state === variables.room_name;
+      const enza  = states[variables.person02_room]?.state === variables.room_name;
+
+      const occupied = radarValid
+        ? r.state === "on"
+        : (Orion || Aura);
+
+      if (!occupied) return "Libera";
+      if (marco && enza) return "Orion & Aura";
+      if (marco) return "Orion";
+      if (enza) return "Aura";
+
+      return "Sconosciuto";
+    ]]]
